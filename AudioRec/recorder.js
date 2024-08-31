@@ -1,17 +1,46 @@
+/*!
+ * ************************************************
+ * FM-DX Webserver Audio Recorder plugin
+ * ************************************************
+ * Created by Adam W (mrwish7)
+ * Join the OpenRadioCommunity Discord: https://discord.gg/fmdx
+ * ************************************************
+ *
+ * This plugin adds a button to allow audio 
+ * recordings to be made within FM-DX Webserver.
+ * 
+ * The recordings are made from the server's raw 
+ * MP3 audio stream and then automatically 
+ * downloaded in the browser once finished.
+ * 
+ * Thanks to: Highpoint2000, bkram, AmateurAudioDude 
+ * 
+ * ************************************************
+ */
+
 const REC_BUTTON_NAME = ' RECORD';
-const audWs = 'ws://' + window.location.host + window.location.pathname + 'audio';
-let aSocket;
-let collectedData = [];
-let fName = "audio";
+// Default max recording time in seconds.
+const REC_BUTTON_TIMEOUT = 120;
+
+// Build audio websocket address
+let protocol = 'ws://';
+if (window.location.protocol == 'https:') {
+    protocol = 'wss://';
+}
+const aRecWS = protocol + window.location.host + window.location.pathname + 'audio';
+// Set-up required variables
+let aRecSocket;
+let aRecData = [];
+let aRecFileName;
 let toggle = true;
 let timer;
 let min = 0;
 let sec = 0;
 
-const recIcon = $('<i>', {
-    class: 'rec-icon',
+const aRecIcon = $('<i>', {
+    class: 'arec-icon',
 });
-recIcon.css({
+aRecIcon.css({
     display: 'inline-block',
     width: '12px',
     height: '12px',
@@ -20,26 +49,26 @@ recIcon.css({
     marginRight: '2px'
 });
 
-const recText = $('<strong>', {
-    class: 'rec-text',
+const aRecText = $('<strong>', {
+    class: 'arec-text',
     html: REC_BUTTON_NAME
 });
 
-const audioRecorderButton = $('<button>', {
+const aRecButton = $('<button>', {
     id: 'audio-record-button',
 });
 
-audioRecorderButton.append(recIcon);
-audioRecorderButton.append(recText);
+aRecButton.append(aRecIcon);
+aRecButton.append(aRecText);
 
-function initializeRecordButton() {
+function initRecButton() {
     let buttonWrapper = $('#button-wrapper');
     if (buttonWrapper.length < 1) {
         buttonWrapper = createDefaultButtonWrapper();
     }
 
     if (buttonWrapper.length) {
-        audioRecorderButton.addClass('hide-phone bg-color-2')
+        aRecButton.addClass('hide-phone bg-color-2')
             .css({
                 borderRadius: '0px',
                 width: '100px',
@@ -49,7 +78,7 @@ function initializeRecordButton() {
                 marginLeft: '5px',
                 right: '0px'
             });
-        buttonWrapper.append(audioRecorderButton);
+        buttonWrapper.append(aRecButton);
     }
 }
 
@@ -71,13 +100,7 @@ function createDefaultButtonWrapper() {
 }
 
 function toggleRecButtonState() {
-    if (toggle) {
-        startRecording();
-        audioRecorderButton.removeClass('bg-color-2').addClass('bg-color-4');
-    } else {
-        stopRecording();
-        audioRecorderButton.removeClass('bg-color-4').addClass('bg-color-2');
-    }
+    toggle ? startRecording() : stopRecording();
     toggle = !toggle;
 }
 
@@ -91,57 +114,66 @@ function updateTimer() {
     let formattedSec = sec < 10 ? '0' + sec : sec;
     let formattedMin = min < 10 ? '0' + min : min;
 
-    recText.html(formattedMin + ':' + formattedSec);
+    aRecText.html(formattedMin + ':' + formattedSec);
 }
 
 function startRecording() {
-    recText.html('00:00');
+    aRecButton.removeClass('bg-color-2').addClass('bg-color-4');
+    aRecText.html('00:00');
     timer = setInterval(updateTimer, 1000);
+    // Build audio filename
     const d = new Date().toISOString().slice(0, 19).replaceAll(':','').replace('T','_');
-    fName = `${d}z_Audio.mp3`
+    let f = $('#data-frequency').text();
+    f.length > 0 ? f = parseInt(f.replace(/\D/g, ''), 10) : f;
+    aRecFileName = `Audio_${d}z_${f}kHz.mp3`;
     // Create WebSocket connection
-    aSocket = new WebSocket(audWs);
-    aSocket.binaryType = 'arraybuffer';
+    aRecSocket = new WebSocket(aRecWS);
+    aRecSocket.binaryType = 'arraybuffer';
 
-    aSocket.addEventListener("open", (event) => {
-        aSocket.send(JSON.stringify({ type: 'fallback', data: 'mp3' }));
+    aRecSocket.addEventListener("open", (event) => {
+        aRecSocket.send(JSON.stringify({ type: 'fallback', data: 'mp3' }));
     });
 
-    aSocket.addEventListener('message', (event) => {
+    aRecSocket.addEventListener('message', (event) => {
         if (event.data instanceof ArrayBuffer) {
-            collectedData.push(event.data);
+            aRecData.push(event.data);
         }
     });
+
+    if (REC_BUTTON_TIMEOUT > 0) {
+        setTimeout(stopRecording, REC_BUTTON_TIMEOUT * 1000);
+    }
 
 }
 
 function stopRecording() {
+    aRecButton.removeClass('bg-color-4').addClass('bg-color-2');
     clearInterval(timer);
     min = 0;
     sec = 0;
-    recText.html(REC_BUTTON_NAME);
+    aRecText.html(REC_BUTTON_NAME);
 
-    if (aSocket) {
-        aSocket.close();
+    if (aRecSocket) {
+        aRecSocket.close();
 
         // Create a Blob from the collected data
-        const blob = new Blob(collectedData, { type: 'application/octet-stream' });
+        const blob = new Blob(aRecData, { type: 'application/octet-stream' });
 
         // Create a link element
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = fName;
+        link.download = aRecFileName;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        collectedData = [];
+        aRecData = [];
     }
 }
 
 $(document).ready(function() {
     setTimeout(() => {
-        initializeRecordButton();
-        audioRecorderButton.on('click', function() {
+        initRecButton();
+        aRecButton.on('click', function() {
             toggleRecButtonState();
         });
     }, 500);
