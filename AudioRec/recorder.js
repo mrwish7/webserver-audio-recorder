@@ -1,4 +1,4 @@
-const REC_BUTTON_NAME = 'RECORD';
+const REC_BUTTON_NAME = ' RECORD';
 const audWs = 'ws://' + window.location.host + window.location.pathname + 'audio';
 let aSocket;
 let collectedData = [];
@@ -39,13 +39,14 @@ function initializeRecordButton() {
     }
 
     if (buttonWrapper.length) {
-        audioRecorderButton.addClass('hide-phone bg-color-3')
+        audioRecorderButton.addClass('hide-phone bg-color-2')
             .css({
                 borderRadius: '0px',
                 width: '100px',
                 height: '22px',
                 position: 'relative',
                 marginTop: '16px',
+                marginLeft: '5px',
                 right: '0px'
             });
         buttonWrapper.append(audioRecorderButton);
@@ -70,7 +71,13 @@ function createDefaultButtonWrapper() {
 }
 
 function toggleRecButtonState() {
-    toggle ? startRecording() : stopRecording();
+    if (toggle) {
+        startRecording();
+        audioRecorderButton.removeClass('bg-color-2').addClass('bg-color-4');
+    } else {
+        stopRecording();
+        audioRecorderButton.removeClass('bg-color-4').addClass('bg-color-2');
+    }
     toggle = !toggle;
 }
 
@@ -132,9 +139,10 @@ function stopRecording() {
 }
 
 $(document).ready(function() {
-    initializeRecordButton();
-
-    audioRecorderButton.on('click', function() {
-        toggleRecButtonState();
-    });
+    setTimeout(() => {
+        initializeRecordButton();
+        audioRecorderButton.on('click', function() {
+            toggleRecButtonState();
+        });
+    }, 500);
 });
