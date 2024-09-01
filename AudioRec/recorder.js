@@ -36,6 +36,7 @@ let toggle = true;
 let timer;
 let min = 0;
 let sec = 0;
+let timeoutRecording;
 
 const aRecIcon = $('<i>', {
     class: 'arec-icon',
@@ -141,13 +142,14 @@ function startRecording() {
     });
 
     if (REC_BUTTON_TIMEOUT > 0) {
-        setTimeout(stopRecording, REC_BUTTON_TIMEOUT * 1000);
+        timeoutRecording = setTimeout(stopRecording, REC_BUTTON_TIMEOUT * 1000);
     }
 
 }
 
 function stopRecording() {
     aRecButton.removeClass('bg-color-4').addClass('bg-color-2');
+    clearTimeout(timeoutRecording);
     clearInterval(timer);
     min = 0;
     sec = 0;
