@@ -172,11 +172,11 @@ function stopRecording() {
     }
 }
 
-$(document).ready(function() {
-    setTimeout(() => {
-        initRecButton();
-        aRecButton.on('click', function() {
-            toggleRecButtonState();
-        });
-    }, 500);
+$(window).on('load', function() {
+    // Delay the initialization of the record button by 500 milliseconds
+    setTimeout(initRecButton, 500);
+
+    aRecButton.on('click', function() {
+        toggleRecButtonState();
+    });
 });
