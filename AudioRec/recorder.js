@@ -45,7 +45,7 @@ aRecIcon.css({
     display: 'inline-block',
     width: '12px',
     height: '12px',
-    backgroundColor: '#ff0000',
+    backgroundColor: 'rgba(255, 0, 0, 0.75)',
     borderRadius: '6px',
     marginRight: '2px'
 });
