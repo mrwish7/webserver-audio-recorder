@@ -19,8 +19,8 @@
  */
 
 const REC_BUTTON_NAME = ' RECORD';
-// Default max recording time in seconds.
-const REC_BUTTON_TIMEOUT = 120;
+// Default max recording time in seconds (default 600 = 10 mins).
+const REC_BUTTON_TIMEOUT = 600;
 
 // Build audio websocket address
 let protocol = 'ws://';
@@ -38,16 +38,40 @@ let min = 0;
 let sec = 0;
 let timeoutRecording;
 
+// Add some styles for elements.
+const aRecCss = `.arec-icon {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    background-color: rgba(255, 0, 0, 0.75);
+    border-radius: 6px;
+    margin-right: 2px;
+}
+#audio-record-button {
+    border-radius: 0px;
+    width: 100px;
+    height: 22px;
+    position: relative;
+    margin-top: 16px;
+    margin-left: 5px;
+    right: 0px;
+}
+@keyframes blink {
+    50% {
+        opacity: 0.0;
+    }
+}
+#audio-record-button.rec-active i.arec-icon {
+    animation: blink 2s step-start 0s infinite;
+}`
+
+$("<style>")
+    .prop("type", "text/css")
+    .html(aRecCss)
+    .appendTo("head");
+
 const aRecIcon = $('<i>', {
     class: 'arec-icon',
-});
-aRecIcon.css({
-    display: 'inline-block',
-    width: '12px',
-    height: '12px',
-    backgroundColor: 'rgba(255, 0, 0, 0.75)',
-    borderRadius: '6px',
-    marginRight: '2px'
 });
 
 const aRecText = $('<strong>', {
@@ -70,15 +94,6 @@ function initRecButton() {
 
     if (buttonWrapper.length) {
         aRecButton.addClass('hide-phone bg-color-2')
-            .css({
-                borderRadius: '0px',
-                width: '100px',
-                height: '22px',
-                position: 'relative',
-                marginTop: '16px',
-                marginLeft: '5px',
-                right: '0px'
-            });
         buttonWrapper.append(aRecButton);
     }
 }
@@ -119,7 +134,7 @@ function updateTimer() {
 }
 
 function startRecording() {
-    aRecButton.removeClass('bg-color-2').addClass('bg-color-4');
+    aRecButton.removeClass('bg-color-2').addClass('bg-color-4').addClass('rec-active');
     aRecText.html('00:00');
     timer = setInterval(updateTimer, 1000);
     // Build audio filename
@@ -148,7 +163,7 @@ function startRecording() {
 }
 
 function stopRecording() {
-    aRecButton.removeClass('bg-color-4').addClass('bg-color-2');
+    aRecButton.removeClass('bg-color-4').removeClass('rec-active').addClass('bg-color-2');
     clearTimeout(timeoutRecording);
     clearInterval(timer);
     min = 0;
@@ -167,6 +182,7 @@ function stopRecording() {
         link.download = aRecFileName;
         document.body.appendChild(link);
         link.click();
+        sendToast('success', 'Audio recording complete', aRecFileName, false, false);
         document.body.removeChild(link);
         aRecData = [];
     }
