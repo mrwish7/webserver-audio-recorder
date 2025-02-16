@@ -18,7 +18,6 @@
  * ************************************************
  */
 
-const REC_BUTTON_NAME = ' RECORD';
 // Default max recording time in seconds (default 600 = 10 mins).
 const REC_BUTTON_TIMEOUT = 600;
 
@@ -39,29 +38,16 @@ let sec = 0;
 let timeoutRecording;
 
 // Add some styles for elements.
-const aRecCss = `.arec-icon {
-    display: inline-block;
-    width: 12px;
-    height: 12px;
-    background-color: rgba(255, 0, 0, 0.75);
-    border-radius: 6px;
-    margin-right: 2px;
-}
-#audio-record-button {
-    border-radius: 0px;
-    width: 100px;
-    height: 22px;
-    position: relative;
-    margin-top: 16px;
-    margin-left: 5px;
-    right: 0px;
-}
-@keyframes blink {
+const aRecCss = `@keyframes blink {
     50% {
         opacity: 0.0;
     }
 }
-#audio-record-button.rec-active i.arec-icon {
+#audio-record-button:hover i {
+    color: rgba(255, 0, 0, 0.75);
+}
+#audio-record-button.rec-active i {
+    color: rgba(255, 0, 0, 0.75);
     animation: blink 2s step-start 0s infinite;
 }`
 
@@ -69,51 +55,6 @@ $("<style>")
     .prop("type", "text/css")
     .html(aRecCss)
     .appendTo("head");
-
-const aRecIcon = $('<i>', {
-    class: 'arec-icon',
-});
-
-const aRecText = $('<strong>', {
-    class: 'arec-text',
-    html: REC_BUTTON_NAME
-});
-
-const aRecButton = $('<button>', {
-    id: 'audio-record-button',
-});
-
-aRecButton.append(aRecIcon);
-aRecButton.append(aRecText);
-
-function initRecButton() {
-    let buttonWrapper = $('#button-wrapper');
-    if (buttonWrapper.length < 1) {
-        buttonWrapper = createDefaultButtonWrapper();
-    }
-
-    if (buttonWrapper.length) {
-        aRecButton.addClass('hide-phone bg-color-2')
-        buttonWrapper.append(aRecButton);
-    }
-}
-
-// Create a default button wrapper if it does not exist
-function createDefaultButtonWrapper() {
-    const wrapperElement = $('.tuner-info');
-    if (wrapperElement.length) {
-        const buttonWrapper = $('<div>', {
-            id: 'button-wrapper'
-        });
-        buttonWrapper.addClass('button-wrapper');
-        wrapperElement.append(buttonWrapper);
-        wrapperElement.append(document.createElement('br'));
-        return buttonWrapper;
-    } else {
-        console.error('Standard location not found. Unable to add button.');
-        return null;
-    }
-}
 
 function toggleRecButtonState() {
     toggle ? startRecording() : stopRecording();
@@ -130,12 +71,12 @@ function updateTimer() {
     let formattedSec = sec < 10 ? '0' + sec : sec;
     let formattedMin = min < 10 ? '0' + min : min;
 
-    aRecText.html(formattedMin + ':' + formattedSec);
+    $('#audio-record-button span').html(formattedMin + ':' + formattedSec);
 }
 
 function startRecording() {
-    aRecButton.removeClass('bg-color-2').addClass('bg-color-4').addClass('rec-active');
-    aRecText.html('00:00');
+    $('#audio-record-button').addClass('rec-active');
+    $('#audio-record-button span').html('00:00');
     timer = setInterval(updateTimer, 1000);
     // Build audio filename
     const d = new Date().toISOString().slice(0, 19).replaceAll(':','').replace('T','_');
@@ -163,12 +104,12 @@ function startRecording() {
 }
 
 function stopRecording() {
-    aRecButton.removeClass('bg-color-4').removeClass('rec-active').addClass('bg-color-2');
+    $('#audio-record-button').removeClass('rec-active');
     clearTimeout(timeoutRecording);
     clearInterval(timer);
     min = 0;
     sec = 0;
-    aRecText.html(REC_BUTTON_NAME);
+    $('#audio-record-button span').html('Record');
 
     if (aRecSocket) {
         aRecSocket.close();
@@ -189,10 +130,12 @@ function stopRecording() {
 }
 
 $(window).on('load', function() {
-    // Delay the initialization of the record button by 500 milliseconds
-    setTimeout(initRecButton, 500);
 
-    aRecButton.on('click', function() {
-        toggleRecButtonState();
-    });
+    setTimeout(function() {
+        addIconToPluginPanel('audio-record-button', 'Record', 'solid', 'circle', 'Start audio recording');
+
+        $('#audio-record-button').on('click', function() {
+            toggleRecButtonState();
+        });
+    }, 1000);
 });
