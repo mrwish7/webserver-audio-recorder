@@ -1,7 +1,7 @@
 // Plugin configuration, this is used in the administration when plugins are loaded
 var pluginConfig = {
     name: 'Audio recorder',
-    version: '1.2',
+    version: '2.0',
     author: 'mrwish7',
     frontEndPath: 'AudioRec/recorder.js'
 }
