@@ -49,12 +49,10 @@ const aRecCss = `@keyframes blink {
 #audio-record-button.rec-active i {
     color: rgba(255, 0, 0, 0.75);
     animation: blink 2s step-start 0s infinite;
+}
+#audio-record-button.rec-active:hover i {
+    color: var(--color-4);
 }`
-
-$("<style>")
-    .prop("type", "text/css")
-    .html(aRecCss)
-    .appendTo("head");
 
 function toggleRecButtonState() {
     toggle ? startRecording() : stopRecording();
@@ -129,13 +127,47 @@ function stopRecording() {
     }
 }
 
-$(window).on('load', function() {
+function createButton(buttonId) {
+    (function waitForFunction() {
+        const maxWaitTime = 10000;
+        let functionFound = false;
 
-    setTimeout(function() {
-        addIconToPluginPanel('audio-record-button', 'Record', 'solid', 'circle', 'Start audio recording');
+        const observer = new MutationObserver((mutationsList, observer) => {
+            if (typeof addIconToPluginPanel === 'function') {
+                observer.disconnect();
+                addIconToPluginPanel(buttonId, 'Record', 'solid', 'circle', 'Start audio recording');
+                functionFound = true;
 
-        $('#audio-record-button').on('click', function() {
-            toggleRecButtonState();
+                const buttonObserver = new MutationObserver(() => {
+                    const $pluginButton = $(`#${buttonId}`);
+                    if ($pluginButton.length > 0) {
+                        $pluginButton.on('click', function() {
+                            // Code to execute on click
+                            toggleRecButtonState();
+                        });
+                        // Additional code
+                        buttonObserver.disconnect(); // Stop observing once button is found
+                    }
+                });
+
+                buttonObserver.observe(document.body, { childList: true, subtree: true });
+            }
         });
-    }, 1000);
-});
+
+        observer.observe(document.body, { childList: true, subtree: true });
+
+        setTimeout(() => {
+            observer.disconnect();
+            if (!functionFound) {
+                console.error(`Function addIconToPluginPanel not found after ${maxWaitTime / 1000} seconds.`);
+            }
+        }, maxWaitTime);
+    })();
+
+    $("<style>")
+        .prop("type", "text/css")
+        .html(aRecCss)
+        .appendTo("head");
+}
+
+createButton('audio-record-button');
