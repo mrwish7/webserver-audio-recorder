@@ -18,6 +18,8 @@
  * ************************************************
  */
 
+(() => {
+
 // Default max recording time in seconds (default 600 = 10 mins).
 const REC_BUTTON_TIMEOUT = 600;
 
@@ -121,7 +123,7 @@ function stopRecording() {
         link.download = aRecFileName;
         document.body.appendChild(link);
         link.click();
-        sendToast('success', 'Audio recording complete', aRecFileName, false, false);
+        sendToast('success', 'Audio recording complete', aRecFileName.length > 28 ? aRecFileName.slice(0, 16) + '...' + aRecFileName.slice(-12) : aRecFileName, false, false);
         document.body.removeChild(link);
         aRecData = [];
     }
@@ -171,3 +173,5 @@ function createButton(buttonId) {
 }
 
 createButton('audio-record-button');
+
+})();
